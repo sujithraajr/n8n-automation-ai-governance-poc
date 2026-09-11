@@ -1,0 +1,980 @@
+{
+  "name": "Automation & AI Intake Triage - LYNX Role POC",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "1d16932b-2764-4a3a-b594-26a2737a833a",
+      "name": "Manual test",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        64,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "cfb0d24f-f158-4c48-b840-4585d67bd653",
+              "name": "requester_name",
+              "value": "Sujith Raaj",
+              "type": "string"
+            },
+            {
+              "id": "f7da0732-ee93-4d5b-a503-223bf875db62",
+              "name": "team",
+              "value": "Customer Operations",
+              "type": "string"
+            },
+            {
+              "id": "1da869cd-67dd-42b9-8a52-30a4b7460efe",
+              "name": "process_name",
+              "value": "Certification exception review",
+              "type": "string"
+            },
+            {
+              "id": "6c545b7d-18ff-4149-915c-92a11786efa8",
+              "name": "process_description",
+              "value": "Review participant exceptions, validate eligibility and payment context, identify the correct next step, update status, and send the appropriate communication.",
+              "type": "string"
+            },
+            {
+              "id": "36706ce2-ab0f-4d98-b54b-2074463106aa",
+              "name": "frequency",
+              "value": "Daily",
+              "type": "string"
+            },
+            {
+              "id": "f9f753dc-b38e-48c6-bbac-a804aa6bd083",
+              "name": "minutes_per_run",
+              "value": 12,
+              "type": "number"
+            },
+            {
+              "id": "8e663cf4-0d7d-4162-bf65-d2f8a8b349bf",
+              "name": "systems",
+              "value": "CRM, payment data, course platform, email",
+              "type": "string"
+            },
+            {
+              "id": "c5b65f5c-756e-494d-8723-cef380f63779",
+              "name": "data_sensitivity",
+              "value": "Personal data",
+              "type": "string"
+            },
+            {
+              "id": "920207f1-d513-4db9-860c-4d669ac663a3",
+              "name": "decision_impact",
+              "value": "Medium",
+              "type": "string"
+            },
+            {
+              "id": "0dc85a66-28a3-4335-9115-bf1dfb2e3af1",
+              "name": "uses_ai",
+              "value": "Yes",
+              "type": "string"
+            },
+            {
+              "id": "db3ad8b8-057a-4407-a13a-c08a505c23ca",
+              "name": "desired_outcome",
+              "value": "Reduce repetitive review while keeping final decisions under human control.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3e411211-85f4-47e2-908c-c5403f728e8d",
+      "name": "Sample intake",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        288,
+        288
+      ]
+    },
+    {
+      "parameters": {
+        "language": "pythonNative",
+        "pythonCode": "# Loop over input items and add a new field called 'my_new_field' to the JSON of each one\nfor item in _items:\n  item[\"json\"][\"my_new_field\"] = 1\nreturn _items"
+      },
+      "id": "1d4a8f10-954d-48d7-bd2a-85b9a7fafa78",
+      "name": "Normalize & estimate effort",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        512,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are assessing a proposed business-process automation opportunity.\n\nINTAKE\nID: {{ $json.intake_id }}\nTeam: {{ $json.team }}\nProcess: {{ $json.process_name }}\nCurrent process: {{ $json.process_description }}\nFrequency: {{ $json.frequency }}\nMinutes per run: {{ $json.minutes_per_run }}\nEstimated annual hours: {{ $json.estimated_hours_per_year }}\nSystems: {{ $json.systems }}\nData sensitivity: {{ $json.data_sensitivity }}\nDecision impact: {{ $json.decision_impact }}\nWill use AI: {{ $json.uses_ai }}\nDesired outcome: {{ $json.desired_outcome }}\n\nAssess whether this is a sensible automation candidate, what pattern could work, the main risks, and measurable success criteria. Be practical and concise. Treat legal/compliance conclusions as preliminary only. Do not approve an automation or make a final regulatory determination.",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=You are an Automation & AI Enablement analyst. Your job is to help a business owner think through an automation idea, not to make the final governance decision.\n\nPrinciples:\n- Prefer simple, maintainable automation over unnecessary complexity.\n- Identify assumptions and missing information.\n- Treat privacy, compliance, security and regulatory risk conservatively.\n- AI recommendations are advisory. Sensitive or high-impact cases should be reviewed by a human.\n- Do not claim GDPR, DORA, MiFID II or EU AI Act compliance. Flag possible relevance for specialist review instead.\n- Return only the requested structured output."
+        }
+      },
+      "id": "f81870e4-c6bd-488f-baf3-00dce04e4689",
+      "name": "AI opportunity & risk assessor",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        736,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-3.1-flash-lite",
+        "options": {}
+      },
+      "id": "22197786-1858-4637-8f8d-85830435c150",
+      "name": "Google Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        752,
+        736
+      ],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "OCT5G9xGHfSB3lDV",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"automation_fit_score\": 78,\n  \"summary\": \"A concise assessment of the opportunity.\",\n  \"recommended_pattern\": \"Form or event trigger -> validation -> rule-based logic -> AI assist -> human review -> system update\",\n  \"expected_benefits\": [\n    \"Reduce repetitive review\",\n    \"Improve consistency\"\n  ],\n  \"data_risk\": \"medium\",\n  \"ai_risk\": \"medium\",\n  \"operational_risk\": \"low\",\n  \"risk_reasons\": [\n    \"Contains personal data\",\n    \"AI supports a decision\"\n  ],\n  \"human_review_needed\": true,\n  \"assumptions\": [\n    \"Final eligibility decision remains with a human reviewer\"\n  ],\n  \"success_metrics\": [\n    \"Average handling time\",\n    \"Exception rate\",\n    \"Human override rate\"\n  ],\n  \"next_step\": \"Run a small proof of concept with synthetic or non-sensitive data and validate with the process owner.\"\n}"
+      },
+      "id": "9251065f-9f34-483f-80a6-e82471687eb4",
+      "name": "Structured output parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        880,
+        736
+      ]
+    },
+    {
+      "parameters": {
+        "formTitle": "Automation Opportunity Intake",
+        "formDescription": "POC intake for identifying automation opportunities and routing them through lightweight AI-assisted risk triage.",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Requester name",
+              "fieldName": "requester_name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Team",
+              "fieldName": "team",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Process name",
+              "fieldName": "process_name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Current process",
+              "fieldType": "textarea",
+              "fieldName": "process_description",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Frequency",
+              "fieldType": "dropdown",
+              "fieldName": "frequency",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Multiple times per day"
+                  },
+                  {
+                    "option": "Daily"
+                  },
+                  {
+                    "option": "Weekly"
+                  },
+                  {
+                    "option": "Monthly"
+                  },
+                  {
+                    "option": "Ad hoc"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Minutes per run",
+              "fieldType": "number",
+              "fieldName": "minutes_per_run",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Systems involved",
+              "fieldName": "systems",
+              "placeholder": "CRM, email, ERP, spreadsheet, ticketing...",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Data sensitivity",
+              "fieldType": "dropdown",
+              "fieldName": "data_sensitivity",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "No sensitive data"
+                  },
+                  {
+                    "option": "Internal business data"
+                  },
+                  {
+                    "option": "Personal data"
+                  },
+                  {
+                    "option": "Financial data"
+                  },
+                  {
+                    "option": "Special category / highly sensitive"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Decision impact",
+              "fieldType": "dropdown",
+              "fieldName": "decision_impact",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Low"
+                  },
+                  {
+                    "option": "Medium"
+                  },
+                  {
+                    "option": "High"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Will the automation use AI?",
+              "fieldType": "dropdown",
+              "fieldName": "uses_ai",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "Yes"
+                  },
+                  {
+                    "option": "No"
+                  },
+                  {
+                    "option": "Not sure"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Desired outcome",
+              "fieldType": "textarea",
+              "fieldName": "desired_outcome",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {
+          "buttonLabel": "Assess opportunity",
+          "ignoreBots": true
+        }
+      },
+      "id": "8a6b839b-452e-4512-b647-d69640a3af82",
+      "name": "Automation intake form",
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.5,
+      "position": [
+        288,
+        480
+      ],
+      "webhookId": "3a9aaea4-ebed-40ab-ae37-8c42dd11cce3"
+    },
+    {
+      "parameters": {
+        "content": "## 1. Intake\nUse the public n8n Form for a real demo or the Manual Test branch for a sample run. The normalization step estimates annual effort and creates a consistent record.",
+        "height": 220,
+        "width": 430
+      },
+      "id": "62194b62-93fe-44ae-b133-4708e5342fd9",
+      "name": "Note - Intake",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 2. AI-assisted assessment\nThe AI Agent assesses automation fit, recommended pattern, risks, assumptions and success metrics. Structured Output Parser keeps the response machine-readable. AI output is advisory.",
+        "height": 240,
+        "width": 500
+      },
+      "id": "badb134b-d239-43af-bc65-743f4fbb1fba",
+      "name": "Note - AI",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        784,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 3. Governance guardrails\nDeterministic rules override the AI recommendation for sensitive/high-impact cases. This deliberately keeps final governance outside the model and routes the item to a human review level.",
+        "height": 250,
+        "width": 500
+      },
+      "id": "ab2e6bcd-0378-4656-abb9-570bef5606de",
+      "name": "Note - Governance",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1392,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "## 4. Automation Registry\nThe workflow creates a structured registry record with owner, systems, AI use, preliminary risks, route, success metrics and next step. In a production version, connect this output to an n8n Data Table, Google Sheet, database, ServiceNow or GRC system.",
+        "height": 230,
+        "width": 420
+      },
+      "id": "a288c530-fafd-4445-ab4b-3ffaae8e6636",
+      "name": "Note - Registry",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2160,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "01835e67-566f-400d-b205-16f44c3eac80",
+      "name": "Merge intake + AI assessment",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        1088,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Deterministic governance guardrails: route_index 0 = human review, 1 = standard, 2 = low-risk fast track.\n// Deterministic rules deliberately override the AI recommendation.\nconst SENSITIVE_PATTERNS = /personal|gdpr|health|financial|payment|hr\b|employee|confidential|restricted|pii/i;\nconst HIGH_IMPACT_PATTERNS = /high|critical|regulatory|legal|customer-facing/i;\n\nreturn $input.all().map((item) => {\n  const j = item.json;\n  const a = j.output || {};\n  const fitScore = Number(a.automation_fit_score) || 0;\n  const sensitive = SENSITIVE_PATTERNS.test(j.data_sensitivity || '');\n  const highImpact = HIGH_IMPACT_PATTERNS.test(j.decision_impact || '') || a.human_review_needed === true;\n\n  let route_index, governance_route, governance_reasons = [];\n  if (sensitive || highImpact) {\n    route_index = 0;\n    governance_route = 'Human review required';\n    if (sensitive) governance_reasons.push('Data sensitivity requires Privacy/Compliance/InfoSec review.');\n    if (highImpact) governance_reasons.push('Decision impact or AI flag requires human validation.');\n  } else if (fitScore >= 7 && j.uses_ai === 'No') {\n    route_index = 2;\n    governance_route = 'Low-risk fast track';\n    governance_reasons.push('High automation fit, internal data, no AI component.');\n  } else {\n    route_index = 1;\n    governance_route = 'Standard review';\n    governance_reasons.push('Does not meet fast-track criteria; standard enablement review applies.');\n  }\n\n  return { json: { ...j, route_index, governance_route, governance_reasons } };\n});"
+      },
+      "id": "0184a94e-4244-445a-a808-890a81096d14",
+      "name": "Deterministic governance guardrails",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1312,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "expression",
+        "numberOutputs": 3,
+        "output": "={{ $json.route_index }}"
+      },
+      "id": "6bd33e01-3539-4268-997a-ac71df62ae23",
+      "name": "Route by governance level",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1536,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "708d6f6e-34e4-4a9f-8a6b-b9a29131a477",
+              "name": "route_action",
+              "value": "Specialist human review required before build or deployment.",
+              "type": "string"
+            },
+            {
+              "id": "d3287233-893d-44f9-98cb-7f43b90b2c30",
+              "name": "route_sla",
+              "value": "Review with Privacy / Compliance / Information Security as relevant.",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "620b29e3-fdb1-43d1-95d0-e8b3d51aba89",
+      "name": "Human review required",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1760,
+        192
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const x = $json;\nconst a = x.output || x.assessment || {};\nconst registry_record = {\n  automation_id: x.intake_id,\n  created_at: x.submitted_at ?? new Date().toISOString(),\n  owner: x.requester_name,\n  team: x.team,\n  process_name: x.process_name,\n  systems: x.systems,\n  uses_ai: x.uses_ai,\n  automation_fit_score: a.automation_fit_score ?? null,\n  recommended_pattern: a.recommended_pattern ?? '',\n  preliminary_data_risk: a.data_risk ?? 'unknown',\n  preliminary_ai_risk: a.ai_risk ?? 'unknown',\n  preliminary_operational_risk: a.operational_risk ?? 'unknown',\n  governance_route: x.governance_route,\n  review_status: 'Pending human validation',\n  success_metrics: a.success_metrics ?? [],\n  next_step: a.next_step ?? '',\n  note: 'POC registry record. Final governance and compliance decisions remain with authorised reviewers.'\n};\nreturn [{\n  json: {\n    registry_record,\n    requester_name: registry_record.owner ?? '',\n    team: registry_record.team ?? '',\n    process_name: registry_record.process_name ?? '',\n    process_description: x.process_description ?? '',\n    frequency: x.frequency ?? '',\n    minutes_per_run: x.minutes_per_run ?? null,\n    systems: registry_record.systems ?? '',\n    data_sensitivity: x.data_sensitivity ?? '',\n    decision_impact: x.decision_impact ?? '',\n    uses_ai: registry_record.uses_ai ?? '',\n    desired_outcome: x.desired_outcome ?? '',\n    automation_fit_score: registry_record.automation_fit_score ?? null,\n    summary: a.summary ?? '',\n    recommended_pattern: registry_record.recommended_pattern ?? '',\n    expected_benefits: Array.isArray(a.expected_benefits) ? a.expected_benefits.join('; ') : (a.expected_benefits ?? ''),\n    data_risk: registry_record.preliminary_data_risk ?? 'unknown',\n    ai_risk: registry_record.preliminary_ai_risk ?? 'unknown',\n    operational_risk: registry_record.preliminary_operational_risk ?? 'unknown',\n    governance_route: registry_record.governance_route ?? '',\n    review_status: registry_record.review_status,\n    submitted_at: registry_record.created_at\n  }\n}];"
+      },
+      "id": "1f109a5c-d687-471b-8454-69bf2f3ed84a",
+      "name": "Create automation registry record",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1984,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2e2d5d05-4aaa-471a-a7d7-821b0eb0c1bd",
+              "name": "route_action",
+              "value": "Standard owner + enablement review before implementation.",
+              "type": "string"
+            },
+            {
+              "id": "e4de654e-7f99-4984-aa71-457185256553",
+              "name": "route_sla",
+              "value": "Validate data handling, AI use, controls and success measures.",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "ad20f85f-4d0e-4fc0-897b-f88a9d0a7272",
+      "name": "Standard review",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1760,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2da9dd81-aba0-4b27-85d6-7b94676532d5",
+              "name": "route_action",
+              "value": "Low-risk fast track for process-owner validation and a small POC.",
+              "type": "string"
+            },
+            {
+              "id": "c42921e5-a802-45a0-8dab-c9ac4c7c4aed",
+              "name": "route_sla",
+              "value": "Use synthetic/non-sensitive data first and measure the agreed success criteria.",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "b9a0577e-88f0-4289-a29c-7fccb27aea76",
+      "name": "Low-risk fast track",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1760,
+        576
+      ]
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "mode": "id",
+          "value": "CQi94IeBKlPubXLH"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "requester_name",
+              "displayName": "requester_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "team",
+              "displayName": "team",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "process_name",
+              "displayName": "process_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "process_description",
+              "displayName": "process_description",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "frequency",
+              "displayName": "frequency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "minutes_per_run",
+              "displayName": "minutes_per_run",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "systems",
+              "displayName": "systems",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "data_sensitivity",
+              "displayName": "data_sensitivity",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "decision_impact",
+              "displayName": "decision_impact",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "uses_ai",
+              "displayName": "uses_ai",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "desired_outcome",
+              "displayName": "desired_outcome",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "automation_fit_score",
+              "displayName": "automation_fit_score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "recommended_pattern",
+              "displayName": "recommended_pattern",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "expected_benefits",
+              "displayName": "expected_benefits",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "data_risk",
+              "displayName": "data_risk",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ai_risk",
+              "displayName": "ai_risk",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "operational_risk",
+              "displayName": "operational_risk",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "governance_route",
+              "displayName": "governance_route",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "review_status",
+              "displayName": "review_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "submitted_at",
+              "displayName": "submitted_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "debbfc01-cb48-4c5e-8264-edf5831e77f0",
+      "name": "Insert into Automation Registry",
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        2208,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "fromEmail": "automation-intake@example.com",
+        "toEmail": "sujith.raaj@gohighlevel.com",
+        "subject": "={{ '[Human review required] ' + $json.process_name + ' — intake triage' }}",
+        "emailFormat": "text",
+        "text": "={{ 'A new automation intake was routed to HUMAN REVIEW.\\n\\nProcess: ' + $json.process_name + '\\nRequester: ' + $json.requester_name + ' (' + $json.team + ')\\nGovernance route: ' + $json.governance_route + '\\nGovernance reasons: ' + ($json.governance_reasons || '').toString() + '\\nAutomation fit score: ' + $json.automation_fit_score + '\\nRecommended pattern: ' + $json.recommended_pattern + '\\n\\nSummary:\\n' + $json.summary + '\\n\\nAction: ' + $json.route_action + '\\nSLA: ' + $json.route_sla }}",
+        "options": {}
+      },
+      "id": "f1a2b3c4-d5e6-47f8-89a0-b1c2d3e4f5a6",
+      "name": "Notify human review email",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        2432,
+        384
+      ],
+      "webhookId": "073424b1-c801-43e9-b192-8f9081b14b9b"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manual test": {
+      "main": [
+        [
+          {
+            "node": "Sample intake",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sample intake": {
+      "main": [
+        [
+          {
+            "node": "Normalize & estimate effort",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize & estimate effort": {
+      "main": [
+        [
+          {
+            "node": "AI opportunity & risk assessor",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge intake + AI assessment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI opportunity & risk assessor": {
+      "main": [
+        [
+          {
+            "node": "Merge intake + AI assessment",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI opportunity & risk assessor",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured output parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI opportunity & risk assessor",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Automation intake form": {
+      "main": [
+        [
+          {
+            "node": "Normalize & estimate effort",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge intake + AI assessment": {
+      "main": [
+        [
+          {
+            "node": "Deterministic governance guardrails",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Deterministic governance guardrails": {
+      "main": [
+        [
+          {
+            "node": "Route by governance level",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route by governance level": {
+      "main": [
+        [
+          {
+            "node": "Human review required",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Standard review",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Low-risk fast track",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Human review required": {
+      "main": [
+        [
+          {
+            "node": "Create automation registry record",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Insert into Automation Registry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create automation registry record": {
+      "main": [
+        [
+          {
+            "node": "Insert into Automation Registry",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Standard review": {
+      "main": [
+        [
+          {
+            "node": "Create automation registry record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Low-risk fast track": {
+      "main": [
+        [
+          {
+            "node": "Create automation registry record",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert into Automation Registry": {
+      "main": [
+        [
+          {
+            "node": "Notify human review email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "746ba6fe-467c-4063-b87c-60a6109c5f6e",
+  "meta": {
+    "instanceId": "439a1d89bfa629b07025cf44c7a7d378480b3ad674df24f88701eb66a369bf89"
+  },
+  "nodeGroups": [],
+  "id": "VbJUKXK1BVqu68fD",
+  "tags": []
+}
